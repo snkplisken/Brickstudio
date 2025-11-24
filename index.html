@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BRICK STUDIO 3D</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Rajdhani:wght@700&display=swap');
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(circle at center, #2b2e35 0%, #0f1012 100%);
+            color: #fff;
+        }
+        
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.8); font-size: 24px; pointer-events: none;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+            font-weight: 200;
+            letter-spacing: 2px;
+        }
+
+        #ui-container {
+            position: absolute; top: 20px; left: 20px; bottom: 20px;
+            width: 340px;
+            display: flex; flex-direction: column;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* --- THE DARK LIQUID GLASS PANEL --- */
+        #ui-panel {
+            background: rgba(15, 15, 20, 0.75);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            pointer-events: auto;
+            max-height: 100%;
+            transition: transform 0.2s ease;
+        }
+
+        /* --- MODERN LOGO HEADER --- */
+        .logo-header { 
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.3) 100%);
+            padding: 25px 20px; 
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Pure CSS Brick Icon */
+        .brick-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #ff4d4d, #cc0000);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            padding: 4px;
+            gap: 4px;
+            position: relative;
+        }
+        
+        .stud {
+            background: rgba(0,0,0,0.15);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .logo-text-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 800;
+            font-size: 24px;
+            line-height: 1;
+            background: linear-gradient(to right, #ffffff, #d0d0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .brand-subtitle {
+            font-size: 10px;
+            font-weight: 700;
+            color: #00d0ff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 4px;
+            text-shadow: 0 0 10px rgba(0, 208, 255, 0.6);
+        }
+
+        /* --- GLOSSY TABS --- */
+        .tabs { 
+            display: flex; 
+            background: rgba(0,0,0,0.2); 
+            padding: 5px 10px;
+            margin-top: 5px;
+        }
+        
+        .tab { 
+            flex: 1; 
+            padding: 12px; 
+            text-align: center; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: 600; 
+            color: rgba(255,255,255,0.4); 
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tab:hover { 
+            color: white;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .tab.active { 
+            background: rgba(255,255,255,0.1);
+            color: #00d0ff; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-shadow: 0 0 10px rgba(0, 208, 255, 0.5);
+        }
+
+        .content { padding: 20px; overflow-y: auto; flex: 1; }
+        
+        .content::-webkit-scrollbar { width: 6px; }
+        .content::-webkit-scrollbar-track { background: transparent; }
+        .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .control-group { margin-bottom: 20px; }
+        
+        label { 
+            display: block; font-size: 10px; color: rgba(255,255,255,0.5); 
+            margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+        }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        button {
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px; 
+            border-radius: 14px;
+            cursor: pointer; 
+            font-size: 12px; 
+            color: rgba(255,255,255,0.8); 
+            width: 100%; 
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover { 
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.3);
+            color: white;
+        }
+        
+        button:active { transform: translateY(0); }
+
+        button.active { 
+            border-color: #00d0ff; 
+            background: rgba(0, 208, 255, 0.15); 
+            color: #00d0ff; 
+            box-shadow: 0 0 20px rgba(0, 208, 255, 0.2), inset 0 0 10px rgba(0, 208, 255, 0.1);
+        }
+        
+        button.delete-mode.active { 
+            border-color: #ff4d4d; 
+            background: rgba(255, 77, 77, 0.15); 
+            color: #ff4d4d; 
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.2), inset 0 0 10px rgba(255, 77, 77, 0.1);
+        }
+
+        input[type="color"] { 
+            width: 100%; height: 45px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 12px; 
+            cursor: pointer; padding: 0; 
+            background: none;
+            overflow: hidden;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; }
+
+        .color-row { 
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; 
+            background: rgba(0,0,0,0.2); padding: 5px 5px 5px 15px; border-radius: 12px;
+        }
+        .color-row span { font-size: 11px; color: rgba(255,255,255,0.6); }
+        .color-row input { flex: 0.6; height: 30px; border-radius: 8px; }
+
+        .tools-footer { 
+            padding: 20px; 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .clear-btn { 
+            background: rgba(255, 77, 77, 0.1); 
+            color: #ff9999; 
+            border: 1px solid rgba(255, 77, 77, 0.2);
+        }
+        .clear-btn:hover {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff4d4d;
+            border-color: #ff4d4d;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.3);
+        }
+
+        #controls-hint {
+            position: absolute; bottom: 30px; right: 30px;
+            background: rgba(10, 10, 15, 0.6); 
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7); 
+            padding: 15px 20px;
+            border-radius: 16px; 
+            font-size: 12px; 
+            pointer-events: none;
+            user-select: none; 
+            z-index: 5;
+            line-height: 1.8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        b { color: #fff; font-weight: 600; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Initialising Engine...</div>
+
+    <div id="ui-container">
+        <div id="ui-panel">
+            <!-- NEW MODERN LOGO HEADER -->
+            <div class="logo-header">
+                <div class="brick-icon">
+                    <div class="stud"></div><div class="stud"></div>
+                    <div class="stud"></div><div class="stud"></div>
+                </div>
+                <div class="logo-text-group">
+                    <span class="brand-title">BRICK</span>
+                    <span class="brand-subtitle">STUDIO 3D</span>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('bricks')">Blocks</div>
+                <div class="tab" onclick="switchTab('special')">Parts</div>
+                <div class="tab" onclick="switchTab('minifig')">Minifig</div>
+            </div>
+
+            <div class="content">
+                <!-- BRICKS TAB -->
+                <div id="tab-bricks" class="tab-content active">
+                    <div class="control-group">
+                        <label>Material Color</label>
+                        <input type="color" id="brick-color" value="#00d0ff">
+                    </div>
+                    <div class="control-group">
+                        <label>Standard Bricks</label>
+                        <div class="grid-2">
+                            <button class="select-btn active" onclick="selectItem('brick', {w:1, d:1})">1x1</button>
+                            <button class="select-btn" onclick="selectItem('brick', {w:2, d:1})">2x1</button>
+                            <button class="select-btn" onclick="selectItem('brick', {w:2, d:2})">2x2</button>
+                            <button class="select-btn" onclick="selectItem('brick', {w:4, d:2})">4x2</button>
+                            <button class="select-btn" onclick="selectItem('brick', {w:6, d:2})">6x2</button>
+                            <button class="select-btn" onclick="selectItem('brick', {w:8, d:2})">8x2</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPECIAL TAB -->
+                <div id="tab-special" class="tab-content">
+                    <div class="control-group">
+                        <label>Part Color</label>
+                        <input type="color" id="special-color" value="#ff0055">
+                    </div>
+                    <div class="control-group">
+                        <label>Aero & Wheels</label>
+                        <div class="grid-2">
+                            <button class="select-btn" onclick="selectItem('slope', {w:2, d:2})">Slope / Roof</button>
+                            <button class="select-btn" onclick="selectItem('windshield', {w:2, d:1})">Glass Cockpit</button>
+                            <button class="select-btn" style="grid-column: span 2" onclick="selectItem('wheels', {w:4, d:2})">🏎️ Wheel Chassis</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MINIFIG TAB -->
+                <div id="tab-minifig" class="tab-content">
+                    <div class="control-group">
+                        <label>Figure Customization</label>
+                        <div class="color-row">
+                            <span>Skin</span>
+                            <input type="color" id="fig-head" value="#ffcc00">
+                        </div>
+                        <div class="color-row">
+                            <span>Torso</span>
+                            <input type="color" id="fig-torso" value="#ffffff">
+                        </div>
+                        <div class="color-row">
+                            <span>Legs</span>
+                            <input type="color" id="fig-legs" value="#0055bb">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <button class="select-btn" style="padding: 15px;" onclick="selectItem('minifig', {})">👤 Select Minifigure</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tools-footer">
+                <div class="grid-2" style="margin-bottom:10px;">
+                    <button id="tool-build" class="active" onclick="setMode('build')">🔨 Build Mode</button>
+                    <button id="tool-delete" class="delete-mode" onclick="setMode('delete')">🗑️ Delete Mode</button>
+                </div>
+                <button class="clear-btn" onclick="clearAll()">Clear All Blocks</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls-hint">
+        <b>Left Click</b> &nbsp; Place / Delete<br>
+        <b>R Key</b> &nbsp; Rotate Piece<br>
+        <b>Shift + Click</b> &nbsp; Instant Delete<br>
+        <b>Right Click</b> &nbsp; Rotate View
+    </div>
+
+    <!-- 3D Engine Import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Variables ---
+        let scene, camera, renderer, controls;
+        let raycaster, pointer;
+        let plane;
+        let objects = [];
+        let ghostObj;
+        
+        // --- State ---
+        const UNIT = 40;
+        let mode = 'build'; 
+        let currentItem = { type: 'brick', props: {w:1, d:1} };
+        let isShift = false;
+        let rotationAngle = 0;
+        
+        let colors = {
+            brick: '#00d0ff',
+            special: '#ff0055',
+            figHead: '#ffcc00',
+            figTorso: '#ffffff',
+            figLegs: '#0055bb'
+        };
+
+        // --- Init ---
+        try {
+            init();
+            animate();
+            document.getElementById('loading').style.display = 'none';
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1c20); 
+            scene.fog = new THREE.Fog(0x1a1c20, 900, 3000);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 5000);
+            camera.position.set(600, 600, 600);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; 
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.02;
+            controls.minDistance = 100;
+            controls.maxDistance = 2000;
+
+            const ambi = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambi);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(200, 500, 300);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            const grid = new THREE.GridHelper(2000, 50, 0x444444, 0x2a2a2a);
+            scene.add(grid);
+
+            const planeGeo = new THREE.PlaneGeometry(2000, 2000);
+            planeGeo.rotateX(-Math.PI / 2);
+            plane = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ visible: false }));
+            scene.add(plane);
+            objects.push(plane);
+
+            raycaster = new THREE.Raycaster();
+            pointer = new THREE.Vector2();
+
+            window.addEventListener('resize', onResize);
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerdown', onDown);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            setupUIListeners();
+            updateGhost();
+        }
+
+        // --- 3D Logic ---
+
+        function createGeometry(type, props, isGhost) {
+            const group = new THREE.Group();
+            
+            const getMat = (col) => new THREE.MeshStandardMaterial({
+                color: col, roughness: 0.2, metalness: 0.1,
+                transparent: isGhost, opacity: isGhost ? 0.5 : 1.0
+            });
+
+            if (type === 'brick') {
+                const w = props.w * UNIT;
+                const h = UNIT;
+                const d = props.d * UNIT;
+                
+                const geo = new THREE.BoxGeometry(w - 2, h, d - 2);
+                const mat = getMat(colors.brick);
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.y = h/2;
+                mesh.castShadow = !isGhost; mesh.receiveShadow = !isGhost;
+                group.add(mesh);
+                
+                const studGeo = new THREE.CylinderGeometry(5, 5, 6, 16);
+                for(let ix=0; ix<props.w; ix++) {
+                    for(let iz=0; iz<props.d; iz++) {
+                        const stud = new THREE.Mesh(studGeo, mat);
+                        stud.position.x = (ix * UNIT) - (w/2) + (UNIT/2);
+                        stud.position.z = (iz * UNIT) - (d/2) + (UNIT/2);
+                        stud.position.y = h + 3;
+                        group.add(stud);
+                    }
+                }
+            }
+            else if (type === 'slope') {
+                const w = props.w * UNIT - 2;
+                const h = UNIT;
+                const d = props.d * UNIT - 2;
+                
+                const shape = new THREE.Shape();
+                shape.moveTo(0,0); shape.lineTo(0,h); shape.lineTo(d,0); shape.lineTo(0,0);
+                
+                const extrudeSettings = { steps: 1, depth: w, bevelEnabled: false };
+                const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                geo.translate(0, 0, -w/2); 
+                geo.rotateY(Math.PI/2); 
+                
+                const mesh = new THREE.Mesh(geo, getMat(colors.special));
+                mesh.position.x = 0; mesh.position.z = 0;
+                mesh.castShadow = !isGhost;
+                group.add(mesh);
+            }
+            else if (type === 'windshield') {
+                const w = props.w * UNIT - 2;
+                const h = UNIT * 1.5;
+                const d = props.d * UNIT - 2;
+                const shape = new THREE.Shape();
+                shape.moveTo(0,0); shape.lineTo(0,h); shape.lineTo(d*0.6, h); shape.lineTo(d,0); shape.lineTo(0,0);
+                const geo = new THREE.ExtrudeGeometry(shape, { depth: w, bevelEnabled: false });
+                geo.translate(0, 0, -w/2);
+                geo.rotateY(Math.PI/2);
+
+                const glassMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x88ccff, metalness: 0.1, roughness: 0.1, transmission: 0.6,
+                    transparent: true, opacity: isGhost ? 0.4 : 0.6
+                });
+                const mesh = new THREE.Mesh(geo, glassMat);
+                group.add(mesh);
+            }
+            else if (type === 'wheels') {
+                const w = props.w * UNIT;
+                const h = UNIT / 2;
+                const d = props.d * UNIT;
+
+                const plateGeo = new THREE.BoxGeometry(w-2, h, d-2);
+                const plate = new THREE.Mesh(plateGeo, getMat(0x222222));
+                plate.position.y = h/2 + (UNIT/2);
+                plate.castShadow = !isGhost;
+                group.add(plate);
+
+                const wheelGeo = new THREE.CylinderGeometry(UNIT/2, UNIT/2, 10, 24);
+                wheelGeo.rotateX(Math.PI/2);
+                const wheelMat = getMat(0x111111);
+                
+                const offsets = [ {x: -w/3, z: d/2+2}, {x: w/3, z: d/2+2}, {x: -w/3, z: -d/2-2}, {x: w/3, z: -d/2-2} ];
+                offsets.forEach(pos => {
+                    const wMesh = new THREE.Mesh(wheelGeo, wheelMat);
+                    wMesh.position.set(pos.x, UNIT/2, pos.z);
+                    group.add(wMesh);
+                });
+            }
+            else if (type === 'minifig') {
+                const opacity = isGhost ? 0.6 : 1.0;
+                const pantsMat = new THREE.MeshStandardMaterial({color: colors.figLegs, opacity: opacity, transparent: isGhost});
+                const shirtMat = new THREE.MeshStandardMaterial({color: colors.figTorso, opacity: opacity, transparent: isGhost});
+                const skinMat = new THREE.MeshStandardMaterial({color: colors.figHead, opacity: opacity, transparent: isGhost});
+
+                const legGeo = new THREE.BoxGeometry(12, 28, 14);
+                const lLeg = new THREE.Mesh(legGeo, pantsMat); lLeg.position.set(-7, 14, 0); lLeg.castShadow = !isGhost; group.add(lLeg);
+                const rLeg = new THREE.Mesh(legGeo, pantsMat); rLeg.position.set(7, 14, 0); rLeg.castShadow = !isGhost; group.add(rLeg);
+                const hip = new THREE.Mesh(new THREE.BoxGeometry(26, 8, 14), pantsMat); hip.position.set(0, 30, 0); group.add(hip);
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(26, 26, 14), shirtMat); torso.position.set(0, 47, 0); torso.castShadow = !isGhost; group.add(torso);
+                const head = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 14), skinMat); head.position.set(0, 67, 0); head.castShadow = !isGhost; group.add(head);
+            }
+
+            return group;
+        }
+
+        function updateGhost() {
+            if (ghostObj) scene.remove(ghostObj);
+            if (mode === 'delete') return;
+            ghostObj = createGeometry(currentItem.type, currentItem.props, true);
+            ghostObj.rotation.y = rotationAngle * (Math.PI / 2);
+            scene.add(ghostObj);
+        }
+
+        function updateCursor() {
+            document.body.style.cursor = (mode === 'delete' || isShift) ? 'crosshair' : 'default';
+            if (ghostObj) ghostObj.visible = !(mode === 'delete' || isShift);
+        }
+
+        function onMove(event) {
+            if(event) pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+            raycaster.setFromCamera(pointer, camera);
+            
+            if (event && event.target && event.target.closest('#ui-panel')) {
+                 if(ghostObj) ghostObj.visible = false;
+                 return;
+            } else {
+                 if(ghostObj && mode !== 'delete') ghostObj.visible = true;
+            }
+
+            const intersects = raycaster.intersectObjects(objects, true);
+            if (intersects.length > 0 && ghostObj) {
+                const intersect = intersects[0];
+                const point = intersect.point;
+                const norm = intersect.face.normal;
+
+                const pos = new THREE.Vector3().copy(point).add(norm);
+                pos.divideScalar(UNIT).floor().multiplyScalar(UNIT).addScalar(UNIT/2);
+
+                let effectiveW = currentItem.props.w;
+                let effectiveD = currentItem.props.d;
+
+                if (['brick','wheels','slope'].includes(currentItem.type)) {
+                    if (rotationAngle % 2 !== 0) {
+                         let temp = effectiveW; effectiveW = effectiveD; effectiveD = temp;
+                    }
+                    if (effectiveW % 2 === 0) pos.x += UNIT/2;
+                    if (effectiveD % 2 === 0) pos.z += UNIT/2;
+                }
+
+                if (intersect.object === plane) {
+                    pos.y = UNIT/2;
+                    if(currentItem.type === 'minifig') pos.y = 0;
+                } else {
+                    const yLevel = Math.floor(point.y / UNIT) * UNIT;
+                    pos.y = (norm.y > 0.5) ? yLevel + UNIT + UNIT/2 : yLevel + UNIT/2;
+                    if(currentItem.type === 'minifig') pos.y = (norm.y > 0.5) ? yLevel + UNIT : yLevel;
+                }
+                ghostObj.position.copy(pos);
+            }
+        }
+
+        function onDown(event) {
+            if(event.button !== 0) return;
+            if(event.target.closest('#ui-panel')) return;
+
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(objects, true);
+
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                if (mode === 'delete' || isShift) {
+                    if (intersect.object !== plane) {
+                        let target = intersect.object;
+                        while(target.parent && target.parent !== scene) target = target.parent;
+                        scene.remove(target);
+                        const idx = objects.indexOf(target);
+                        if(idx > -1) objects.splice(idx, 1);
+                    }
+                    return;
+                }
+                if (ghostObj && ghostObj.visible) {
+                    const newItem = createGeometry(currentItem.type, currentItem.props, false);
+                    newItem.position.copy(ghostObj.position);
+                    newItem.rotation.y = rotationAngle * (Math.PI / 2);
+                    scene.add(newItem);
+                    objects.push(newItem);
+                }
+            }
+        }
+
+        function onKeyDown(e) { 
+            if(e.key === "Shift") { isShift = true; updateCursor(); }
+            if(e.key === "r" || e.key === "R") {
+                rotationAngle = (rotationAngle + 1) % 4;
+                if(ghostObj) {
+                    ghostObj.rotation.y = rotationAngle * (Math.PI / 2);
+                    onMove(null); 
+                }
+            }
+        }
+        
+        function onKeyUp(e) { if(e.key === "Shift") { isShift = false; updateCursor(); } }
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(controls) controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.switchTab = function(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        };
+
+        window.setMode = function(m) {
+            mode = m;
+            document.getElementById('tool-build').classList.toggle('active', m === 'build');
+            document.getElementById('tool-delete').classList.toggle('active', m === 'delete');
+            updateCursor();
+            if(m === 'build') updateGhost();
+        };
+
+        window.selectItem = function(type, props) {
+            currentItem = { type, props };
+            document.querySelectorAll('.select-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            setMode('build');
+            updateGhost();
+        };
+
+        window.clearAll = function() {
+            const toRemove = objects.filter(o => o !== plane);
+            toRemove.forEach(o => scene.remove(o));
+            objects = [plane];
+        };
+
+        function setupUIListeners() {
+            document.getElementById('brick-color').addEventListener('input', (e) => {
+                colors.brick = e.target.value; if(currentItem.type==='brick') updateGhost();
+            });
+            document.getElementById('special-color').addEventListener('input', (e) => {
+                colors.special = e.target.value; if(currentItem.type==='slope') updateGhost();
+            });
+            const updateFig = () => {
+                colors.figHead = document.getElementById('fig-head').value;
+                colors.figTorso = document.getElementById('fig-torso').value;
+                colors.figLegs = document.getElementById('fig-legs').value;
+                if(currentItem.type==='minifig') updateGhost();
+            };
+            document.getElementById('fig-head').addEventListener('input', updateFig);
+            document.getElementById('fig-torso').addEventListener('input', updateFig);
+            document.getElementById('fig-legs').addEventListener('input', updateFig);
+        }
+    </script>
+</body>
+</html>
