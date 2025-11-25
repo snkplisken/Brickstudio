@@ -357,7 +357,7 @@
         <b>Left Click</b> &nbsp; Place / Delete<br>
         <b>R Key</b> &nbsp; Rotate Piece<br>
         <b>Shift + Click</b> &nbsp; Instant Delete<br>
-        <b>Right Click</b> &nbsp; Rotate View
+        <b>Middle Click + Drag</b> &nbsp; Orbit View
     </div>
 
     <!-- 3D Engine Import -->
@@ -421,11 +421,17 @@
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; 
+            controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.maxPolarAngle = Math.PI / 2 - 0.02;
             controls.minDistance = 100;
             controls.maxDistance = 2000;
+            controls.enablePan = false;
+            controls.mouseButtons = {
+                LEFT: THREE.MOUSE.PAN,
+                MIDDLE: THREE.MOUSE.ROTATE,
+                RIGHT: THREE.MOUSE.DOLLY
+            };
 
             const ambi = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambi);
