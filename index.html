@@ -280,6 +280,11 @@
             </div>
 
             <div class="content">
+                <div class="control-group">
+                    <label>Background Color</label>
+                    <input type="color" id="background-color" value="#1a1c20">
+                </div>
+
                 <!-- BRICKS TAB -->
                 <div id="tab-bricks" class="tab-content active">
                     <div class="control-group">
@@ -352,7 +357,7 @@
         <b>Left Click</b> &nbsp; Place / Delete<br>
         <b>R Key</b> &nbsp; Rotate Piece<br>
         <b>Shift + Click</b> &nbsp; Instant Delete<br>
-        <b>Right Click</b> &nbsp; Rotate View
+        <b>Middle Click + Drag</b> &nbsp; Orbit View
     </div>
 
     <!-- 3D Engine Import -->
@@ -388,7 +393,8 @@
             special: '#ff0055',
             figHead: '#ffcc00',
             figTorso: '#ffffff',
-            figLegs: '#0055bb'
+            figLegs: '#0055bb',
+            background: '#1a1c20'
         };
 
         // --- Init ---
@@ -415,11 +421,17 @@
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; 
+            controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.maxPolarAngle = Math.PI / 2 - 0.02;
             controls.minDistance = 100;
             controls.maxDistance = 2000;
+            controls.enablePan = false;
+            controls.mouseButtons = {
+                LEFT: THREE.MOUSE.PAN,
+                MIDDLE: THREE.MOUSE.ROTATE,
+                RIGHT: THREE.MOUSE.DOLLY
+            };
 
             const ambi = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambi);
@@ -450,7 +462,18 @@
             document.addEventListener('keyup', onKeyUp);
 
             setupUIListeners();
+            applyBackgroundColor(colors.background);
             updateGhost();
+        }
+
+        function applyBackgroundColor(hex) {
+            const base = new THREE.Color(hex);
+            const lighter = base.clone().offsetHSL(0, 0, 0.08);
+            const darker = base.clone().offsetHSL(0, 0, -0.12);
+
+            scene.background = base;
+            scene.fog.color.copy(base);
+            document.body.style.background = `radial-gradient(circle at center, ${lighter.getStyle()} 0%, ${darker.getStyle()} 100%)`;
         }
 
         // --- 3D Logic ---
@@ -704,6 +727,10 @@
             });
             document.getElementById('special-color').addEventListener('input', (e) => {
                 colors.special = e.target.value; if(currentItem.type==='slope') updateGhost();
+            });
+            document.getElementById('background-color').addEventListener('input', (e) => {
+                colors.background = e.target.value;
+                applyBackgroundColor(colors.background);
             });
             const updateFig = () => {
                 colors.figHead = document.getElementById('fig-head').value;
